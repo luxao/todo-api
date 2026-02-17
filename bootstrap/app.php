@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Middleware\AlwaysAcceptJson;
+use App\Support\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,5 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(AlwaysAcceptJson::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        //Validation errors (FormRequest / validate())
+        $exceptions->render(function (ValidationException $e) {
+
+            return ApiResponse::error(
+                'Validation failed',
+                $e->errors(),
+                400
+            );
+        });
     })->create();
