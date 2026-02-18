@@ -111,4 +111,26 @@ class TodoController extends Controller
             200
         );
     }
+
+    /**
+     * Toggle the completed status of a todo.
+     * Example: PATCH /api/todos/{id}/toggle
+     */
+    public function toggle(Request $request, int $id)
+    {
+        $todo = Todo::where('user_id', $request->user()->id)->find($id);
+
+        if (!$todo) {
+            return ApiResponse::error('Todo not found', null, 404);
+        }
+
+        $todo->completed = !$todo->completed;
+        $todo->save();
+
+        return ApiResponse::success(
+            new TodoResource($todo),
+            'Todo toggled successfully',
+            200
+        );
+    }
 }
