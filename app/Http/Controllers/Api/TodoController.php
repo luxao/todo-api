@@ -21,6 +21,35 @@ class TodoController extends Controller
         $user = $request->user();
         $query = Todo::query()->where('user_id', $user->id);
 
+        // všetky - aj zmazané
+        if ($request->boolean('with_trashed')) {
+            $query->withTrashed();
+        }
+        // len zmazané
+        if ($request->boolean('only_trashed')) {
+            $query->onlyTrashed();
+        }
+
+        //filter by status
+        $status = $request->query('status');
+        if ($status == 'completed') {
+            $query->where('completed', true);
+        }
+        if ($status == 'pending') {
+            $query->where('completed', false);
+        }
+
+        //search by title or description
+        $q = trim((string) $request->query('q'));
+
+        if ($q !== '') {
+            $query->where(function ($query) use ($q) {
+                $query->where('title', 'like', "%$q%")
+                    ->orWhere('description', 'like', "%$q%");
+            });
+        }
+
+
         $todos = $query->orderByDesc('created_at')->paginate($request->integer('per_page', 10));
 
         return ApiResponse::success(
