@@ -14,7 +14,7 @@ class TodoController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *  Example: GET /api/todos?per_page=10
+     *  Example: GET /api/todos?per_page=10&status=completed|pending&q=milk
      */
     public function index(Request $request)
     {
@@ -82,7 +82,7 @@ class TodoController extends Controller
      * Display the specified resource.
      * Example: GET /api/todos/{id}
      */
-    public function show(Request $request, string $id)
+    public function show(Request $request, int $id)
     {
         $user = $request->user();
         $todo = Todo::where('user_id', $user->id)->find($id);
@@ -102,7 +102,7 @@ class TodoController extends Controller
      * Update the specified resource in storage.
      * Example: PUT /api/todos/{id}
      */
-    public function update(UpdateTodoRequest $request, string $id)
+    public function update(UpdateTodoRequest $request, int $id)
     {
         $user = $request->user();
         $todo = Todo::where('user_id', $user->id)->find($id);
@@ -179,5 +179,45 @@ class TodoController extends Controller
             'completed' => $completed,
             'pending' => $total - $completed,
         ], 'Todo stats fetched', 200);
+    }
+
+    /**
+     * Restore a soft-deleted todo.
+     * Example: POST /api/todos/{id}/restore
+     */
+    public function restore(Request $request, int $id)
+    {
+        $todo = Todo::withTrashed()
+            ->where('user_id', $request->user()->id)
+            ->find($id);
+
+        if (!$todo) {
+            return ApiResponse::error('Todo not found', null, 404);
+        }
+
+        if ($todo->trashed()) {
+            $todo->restore();
+        }
+
+        return ApiResponse::success(new TodoResource($todo), 'Todo restored successfully', 200);
+    }
+
+    /**
+     * Permanently delete a todo.
+     * Example: DELETE /api/todos/{id}/force
+     */
+    public function forceDestroy(Request $request, int $id)
+    {
+        $todo = Todo::withTrashed()
+            ->where('user_id', $request->user()->id)
+            ->find($id);
+
+        if (!$todo) {
+            return ApiResponse::error('Todo not found', null, 404);
+        }
+
+        $todo->forceDelete();
+
+        return ApiResponse::success(null, 'Todo permanently deleted', 200);
     }
 }
