@@ -133,4 +133,22 @@ class TodoController extends Controller
             200
         );
     }
+
+    /**
+     * Get stats about user's todos.
+     * Example: GET /api/todos/stats
+     */
+    public function stats(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        $total = Todo::where('user_id', $userId)->count();
+        $completed = Todo::where('user_id', $userId)->where('completed', true)->count();
+
+        return ApiResponse::success([
+            'total' => $total,
+            'completed' => $completed,
+            'pending' => $total - $completed,
+        ], 'Todo stats fetched', 200);
+    }
 }
