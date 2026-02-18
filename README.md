@@ -32,7 +32,7 @@
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/your-username/todo-api.git
+git clone https://github.com/luxao/todo-api.git
 cd todo-api
 ```
 
